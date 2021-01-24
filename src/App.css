@@ -17,6 +17,10 @@ p {
   margin-bottom: 16px;
 } */
 
+.button-box {
+  display: flex;
+  justify-content: flex-end;
+}
 .welcome-banner {
   padding: 48px;
   text-align: center;
