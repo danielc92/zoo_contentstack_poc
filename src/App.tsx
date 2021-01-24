@@ -4,6 +4,14 @@ import "./App.css";
 import { Helmet } from "react-helmet";
 import { config } from "process";
 
+interface Banner {
+  banner: {
+    banner_title: string;
+    _metadata: { uid: string };
+    banner_subtitle: string;
+    variant: string;
+  };
+}
 function App() {
   // animal cards
   const [entries, setEntries] = useState<{
@@ -34,7 +42,7 @@ function App() {
   const refetchData = (locale: string, content_type: string) => {
     setEntries({ ...entries, loading: true });
     fetch(
-      `https://eu-cdn.contentstack.com/v3/content_types/${content_type}/entries?environment=${CONFIG.ENVIRONMENT}&include_fallback=true&locale=${locale}`,
+      `https://eu-cdn.contentstack.com/v3/content_types/${content_type}/entries?environment=${CONFIG.ENVIRONMENT}&include_fallback=true&locale=${locale}&include[]=author`,
       {
         headers: {
           api_key: CONFIG.API_KEY,
@@ -85,51 +93,52 @@ function App() {
     <>
       {page.data && (
         <Helmet>
-          <title>{page.data.entries[0].title}</title>
+          <title>{page.data.entries[0].meta.page_title}</title>
           <meta
             name="keywords"
-            content={page.data.entries[0].tags.join(",")}
+            content={page.data.entries[0].meta.single_line.join(",")}
+          ></meta>
+          <meta
+            name="description"
+            content={page.data.entries[0].meta.page_description}
           ></meta>
         </Helmet>
       )}
 
       <div className="container">
-        <button
-          onClick={() => {
-            refetchData(CONFIG.LOCALES.FALLBACK_DEFAULT, "daniels_zoo_animal");
-            refetchPage(CONFIG.LOCALES.FALLBACK_DEFAULT);
-          }}
-        >
-          English
-        </button>
-        <button
-          onClick={() => {
-            refetchData(CONFIG.LOCALES.SPANISH, "daniels_zoo_animal");
-            refetchPage(CONFIG.LOCALES.SPANISH);
-          }}
-        >
-          Espanol
-        </button>
+        <div className="button-box">
+          <button
+            onClick={() => {
+              refetchData(
+                CONFIG.LOCALES.FALLBACK_DEFAULT,
+                "daniels_zoo_animal"
+              );
+              refetchPage(CONFIG.LOCALES.FALLBACK_DEFAULT);
+            }}
+          >
+            English
+          </button>
+          <button
+            onClick={() => {
+              refetchData(CONFIG.LOCALES.SPANISH, "daniels_zoo_animal");
+              refetchPage(CONFIG.LOCALES.SPANISH);
+            }}
+          >
+            Espanol
+          </button>
+        </div>
+
         {page.data && <h1>{page.data.entries[0].title}</h1>}
 
         {page?.data?.entries[0]?.modular_blocks &&
-          page.data.entries[0].modular_blocks.map(
-            (block: {
-              welcome_banner: {
-                single_line: string;
-                subheading: string;
-                variant: string;
-                _metadata: { uid: string };
-              };
-            }) => (
-              <div
-                className={`welcome-banner welcome-banner--${block.welcome_banner.variant}`}
-              >
-                <h3>{block.welcome_banner.single_line}</h3>
-                <p>{block.welcome_banner.subheading}</p>
-              </div>
-            )
-          )}
+          page.data.entries[0].modular_blocks.map((block: Banner) => (
+            <div
+              className={`welcome-banner welcome-banner--${block.banner.variant}`}
+            >
+              <h3>{block.banner.banner_title}</h3>
+              <p>{block.banner.banner_subtitle}</p>
+            </div>
+          ))}
 
         <h2>Our animals</h2>
 
@@ -169,7 +178,10 @@ function App() {
                       visit {d.title}.
                     </p>
                   )}
-                  <p className="text--help">Last updated: {d.updated_at}</p>
+                  <p className="text--help">
+                    This information was last updated by{" "}
+                    <strong>{d.author[0].title}</strong> on {d.updated_at}
+                  </p>
                 </div>
                 {d.has_discount && <div className="sale-badge">Flash Sale</div>}
               </div>
